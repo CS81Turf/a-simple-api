@@ -3,6 +3,9 @@ import express from 'express';
 const app = express();
 const port = 2025;
 
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+
 const tvCharacters = [
     {
         id: 1,
@@ -75,6 +78,13 @@ function getCharacterById(characterId) {
     return character;
 }
 
+app.get("/api/characters", (request, response) => {
+    const characters = getAllCharacters();
+    response.status(200).json({
+        data: characters,
+    });
+});
+
 app.get("/api/characters/:id", (request, response) => {
     const character = getCharacterById(request.params.id);
 
@@ -89,11 +99,40 @@ app.get("/api/characters/:id", (request, response) => {
     });
 });
 
-app.get("/api/characters", (request, response) => {
-    const characters = getAllCharacters();
-    response.status(200).json({
-        data: characters,
+function createCharacter(requestBody) {
+    const newCharacter = {
+        id: tvCharacters.length + 1,
+        name: requestBody.name,
+        show: requestBody.show,
+    }
+
+    if (!newCharacter.name || !newCharacter.show) {
+        return undefined;
+    }
+
+    tvCharacters.push(newCharacter)
+    return newCharacter;
+}
+
+app.post("/api/characters", (request, response) => {
+    if (!request.body) {
+        return response.status(400).json({
+            data: "Bad request. Missing required information",
+        });
+    }
+
+    const newCharacter = createCharacter(request.body);
+
+    if (!newCharacter) {
+        return response.status(400).json({
+            data: "Bad request. Missing required information",
+        });
+    }
+
+    response.status(201).json({
+        data: newCharacter,
     });
+
 });
 
 app.listen(port, () => {
